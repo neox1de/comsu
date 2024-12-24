@@ -1,29 +1,53 @@
 #!/bin/bash
 
-# Check if jq is installed; if not, install it
+# Detect OS and set package manager
+OS=""
+INSTALL_CMD=""
+
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$ID
+else
+    echo "Unable to detect OS."
+    exit 1
+fi
+
+case "$OS" in
+    ubuntu|debian)
+        INSTALL_CMD="sudo apt-get update && sudo apt-get install -y jq"
+        ;;
+    arch)
+        INSTALL_CMD="sudo pacman -S --noconfirm jq"
+        ;;
+    fedora)
+        INSTALL_CMD="sudo dnf install -y jq"
+        ;;
+    *)
+        echo "Unsupported OS: $OS"
+        exit 1
+        ;;
+esac
+
+# Install jq if not already installed
 if ! command -v jq &> /dev/null; then
-    echo "jq not found, installing..."
-    sudo apt-get update
-    sudo apt-get install -y jq
+    echo "Installing jq..."
+    eval "$INSTALL_CMD"
 else
     echo "jq is already installed."
 fi
 
-# Create a directory for shared files
+# Create directory for shared files
 SHARE_DIR="/usr/local/share/git-comsu"
 if [ ! -d "$SHARE_DIR" ]; then
-    echo "Creating directory for shared files at $SHARE_DIR..."
     sudo mkdir -p "$SHARE_DIR"
 fi
 
 # Copy prompt to the shared directory
-echo "Copying prompt file to $SHARE_DIR..."
 sudo cp prompt "$SHARE_DIR/"
 
-# Make git-comsu executable and copy it to /usr/local/bin
-echo "Installing git-comsu script to /usr/local/bin..."
+# Make git-comsu executable and copy to /usr/local/bin
 sudo cp git-comsu /usr/local/bin/git-comsu
 sudo chmod +x /usr/local/bin/git-comsu
 
 echo
-echo "Installation completed. You can now run 'git comsu' command."
+echo "Installation completed. You can now run 'git comsu'."
