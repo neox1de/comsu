@@ -1,32 +1,18 @@
 #!/bin/bash
 
-# Detect OS and set package manager
-OS=""
-INSTALL_CMD=""
-
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS=$ID
+# Detect package manager
+if command -v apt-get &> /dev/null; then
+    INSTALL_CMD="sudo apt-get update && sudo apt-get install -y jq"
+elif command -v pacman &> /dev/null; then
+    INSTALL_CMD="sudo pacman -S --noconfirm jq"
+elif command -v dnf &> /dev/null; then
+    INSTALL_CMD="sudo dnf install -y jq"
+elif command -v brew &> /dev/null; then
+    INSTALL_CMD="brew install jq"
 else
-    echo "Unable to detect OS."
+    echo "Unsupported package manager."
     exit 1
 fi
-
-case "$OS" in
-    ubuntu|debian)
-        INSTALL_CMD="sudo apt-get update && sudo apt-get install -y jq"
-        ;;
-    arch)
-        INSTALL_CMD="sudo pacman -S --noconfirm jq"
-        ;;
-    fedora)
-        INSTALL_CMD="sudo dnf install -y jq"
-        ;;
-    *)
-        echo "Unsupported OS: $OS"
-        exit 1
-        ;;
-esac
 
 # Install jq if not already installed
 if ! command -v jq &> /dev/null; then
